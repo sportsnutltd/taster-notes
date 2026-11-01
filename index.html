@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F2A44">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Taster Notes">
+<title>Sports Nut — Taster Session Notes</title>
+<style>
+  :root {
+    --dark: #2B2B2B;
+    --red: #E8453C;
+    --blue: #41B8E8;
+    --white: #FFFFFF;
+    --light: #F5F5F5;
+    --border: #DDDDDD;
+    --radius: 8px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f2f5; color: var(--dark); }
+
+  /* PASSWORD SCREEN */
+  #passwordScreen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .password-box {
+    background: white; border-radius: var(--radius); padding: 40px;
+    max-width: 400px; width: 100%; text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .password-box img { width: 160px; margin-bottom: 20px; }
+  .password-box h2 { font-size: 20px; margin-bottom: 8px; }
+  .password-box p { color: #666; font-size: 14px; margin-bottom: 24px; }
+  .password-box input {
+    width: 100%; padding: 12px; border: 2px solid var(--border);
+    border-radius: var(--radius); font-size: 16px; margin-bottom: 12px;
+    text-align: center; letter-spacing: 2px;
+  }
+  .password-box button {
+    width: 100%; padding: 14px; background: var(--dark); color: white;
+    border: none; border-radius: var(--radius); font-size: 16px;
+    font-weight: bold; cursor: pointer;
+  }
+  .password-error { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+
+  /* MAIN FORM */
+  #mainForm { display: none; max-width: 680px; margin: 0 auto; padding: 20px; }
+
+  .header {
+    background: var(--dark); color: white; border-radius: var(--radius);
+    padding: 20px; margin-bottom: 20px; display: flex;
+    align-items: center; gap: 16px;
+  }
+  .header img { height: 48px; }
+  .header-text h1 { font-size: 20px; }
+  .header-text p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+  .card {
+    background: white; border-radius: var(--radius); padding: 24px;
+    margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .card h2 {
+    font-size: 14px; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--blue); margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--blue);
+  }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block; font-size: 13px; font-weight: bold;
+    color: var(--dark); margin-bottom: 6px;
+  }
+  label .required { color: var(--red); margin-left: 2px; }
+
+  select, input[type="text"], textarea {
+    width: 100%; padding: 12px; border: 2px solid var(--border);
+    border-radius: var(--radius); font-size: 15px; color: var(--dark);
+    background: white; transition: border-color 0.2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  select:focus, input[type="text"]:focus, textarea:focus {
+    outline: none; border-color: var(--blue);
+  }
+  textarea { min-height: 120px; resize: vertical; font-family: Arial, sans-serif; }
+
+  .auto-field {
+    background: #f8f9fa; border: 2px solid #e9ecef;
+    border-radius: var(--radius); padding: 12px;
+    font-size: 15px; color: #495057; min-height: 44px;
+    display: flex; align-items: center;
+  }
+  .auto-field.filled { background: #e8f5e9; border-color: #4caf50; color: var(--dark); }
+  .auto-field.loading { color: #999; font-style: italic; }
+
+  .override-link {
+    font-size: 12px; color: var(--blue); cursor: pointer;
+    text-decoration: underline; margin-top: 4px; display: inline-block;
+  }
+
+  /* Radio buttons for fast track */
+  .radio-group { display: flex; gap: 12px; }
+  .radio-option {
+    flex: 1; border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 12px; text-align: center; cursor: pointer;
+    font-size: 15px; font-weight: bold; transition: all 0.2s;
+  }
+  .radio-option.yes { color: #1E7E34; }
+  .radio-option.no { color: #CC0000; }
+  .radio-option.selected.yes { background: #D4EDDA; border-color: #1E7E34; }
+  .radio-option.selected.no { background: #FFE0E0; border-color: #CC0000; }
+  input[type="radio"] { display: none; }
+
+  .submit-btn {
+    width: 100%; padding: 16px; background: var(--red); color: white;
+    border: none; border-radius: var(--radius); font-size: 17px;
+    font-weight: bold; cursor: pointer; margin-top: 8px;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover { background: #c73530; }
+  .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  .success-msg {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1E7E34;
+    border-radius: var(--radius);
+    padding: 20px 32px;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+  }
+
+  .hint { font-size: 12px; color: #888; margin-top: 4px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- PASSWORD SCREEN -->
+<div id="passwordScreen">
+  <div class="password-box">
+    <img src="https://www.sports-nut.co.uk/wp-content/uploads/logo-color.webp"
+         onerror="this.style.display='none'" alt="Sports Nut">
+    <h2>Sports Nut</h2>
+    <p>Taster Session Notes</p>
+    <input type="password" id="passwordInput" placeholder="Enter password"
+           onkeydown="if(event.key==='Enter') checkPassword()">
+    <button onclick="checkPassword()">ENTER</button>
+    <div class="password-error" id="passwordError">Incorrect password — please try again</div>
+  </div>
+</div>
+
+<!-- MAIN FORM -->
+<div id="mainForm">
+  <div class="header">
+    <img src="https://www.sports-nut.co.uk/wp-content/uploads/logo-color.webp"
+         onerror="this.style.display='none'" alt="Sports Nut">
+    <div class="header-text">
+      <h1>Taster Session Notes</h1>
+      <p>Complete after each taster session</p>
+    </div>
+  </div>
+
+  <!-- SECTION 1: Teacher -->
+  <div class="card">
+    <h2>Teacher Details</h2>
+    <div class="field">
+      <label>Your Name <span class="required">*</span></label>
+      <select id="teacherName" onchange="onTeacherChange()">
+        <option value="">— Select your name —</option>
+        <option>Amina Imansoura</option>
+        <option>Chris Pollard</option>
+        <option>Christy Otway</option>
+        <option>Ellie Melrose</option>
+        <option>Emma Hamilton</option>
+        <option>Gabby Morris</option>
+        <option>Hannah Eddy</option>
+        <option>June Freebody</option>
+        <option>Kasia Jarmoszynska</option>
+        <option>Kate Ridden</option>
+        <option>Katie Hall</option>
+        <option>Karolyn Nailard</option>
+        <option>Korrie Ford</option>
+        <option>Laura Evans</option>
+        <option>Lindsey Collinson</option>
+        <option>Maisy Howard</option>
+        <option>Mark Tennant</option>
+        <option>Mecaela Allen</option>
+        <option>Norbert Mandic</option>
+        <option>Oliver Vine</option>
+        <option>Paige Morgan</option>
+        <option>Pippa Davie</option>
+        <option>Rachel Cornford</option>
+        <option>Rebecca Tennant</option>
+        <option>Rebekah Bradley</option>
+        <option>Reshaun Willis</option>
+        <option>Salil Kulkarni</option>
+        <option>Sian Lipscomb</option>
+        <option>Sophie Clayton</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SECTION 2: Child -->
+  <div class="card">
+    <h2>Child Details</h2>
+    <div class="field">
+      <label>Child Name <span class="required">*</span></label>
+      <select id="childName" onchange="onChildChange()">
+        <option value="">— Select child name —</option>
+      </select>
+      <span class="override-link" onclick="toggleOverride('childOverride', 'childName')">
+        Can't find name? Enter manually
+      </span>
+      <input type="text" id="childOverride" placeholder="Type child name here"
+             style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="field">
+      <label>Venue</label>
+      <div class="auto-field loading" id="venueField">Select a child to auto-fill</div>
+      <span class="override-link" onclick="toggleOverride('venueOverride', 'venueField')">
+        Override venue
+      </span>
+      <select id="venueOverride" style="display:none; margin-top:8px;">
+        <option value="">— Select venue —</option>
+        <option>Davenies School</option>
+        <option>Godstowe School</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Day &amp; Date</label>
+      <div class="auto-field loading" id="dayDateField">Select a child to auto-fill</div>
+      <span class="override-link" onclick="toggleOverride('dayDateOverride', 'dayDateField')">
+        Override day &amp; date
+      </span>
+      <input type="text" id="dayDateOverride" placeholder="e.g. Monday 21 September 2026"
+             style="display:none; margin-top:8px;">
+    </div>
+
+    <div class="field">
+      <label>Time</label>
+      <div class="auto-field loading" id="timeField">Select a child to auto-fill</div>
+      <span class="override-link" onclick="toggleOverride('timeOverride', 'timeField')">
+        Override time
+      </span>
+      <input type="text" id="timeOverride" placeholder="e.g. 16:30"
+             style="display:none; margin-top:8px;">
+    </div>
+  </div>
+
+  <!-- SECTION 3: Assessment -->
+  <div class="card">
+    <h2>Assessment</h2>
+    <div class="field">
+      <label>Suggested Level <span class="required">*</span></label>
+      <select id="suggestedLevel">
+        <option value="">— Select suggested level —</option>
+        <option>L1</option>
+        <option>L2</option>
+        <option>L3</option>
+        <option>L4</option>
+        <option>L5</option>
+        <option>L6</option>
+        <option>L7</option>
+        <option>L8</option>
+        <option>Squad</option>
+      </select>
+    </div>
+
+    <!-- SWIM TIMES — only shown for L5+ and Squad -->
+    <div class="field" id="swimTimesSection" style="display:none;">
+      <div style="background:#EBF5FB; border:2px solid #41B8E8; border-radius:8px; padding:16px; margin-bottom:16px;">
+        <div style="font-weight:bold; color:#41B8E8; margin-bottom:4px; font-size:14px;">⏱ SWIM TIMES</div>
+        <div style="font-size:12px; color:#666; font-style:italic; margin-bottom:12px;">Please enter their front crawl and back crawl 1 length time or pick Not Recorded if you didn't get the times.</div>
+        <div class="field">
+          <label>Front Crawl 1 Length Time <span class="required">*</span></label>
+          <select id="frontCrawlTime">
+            <option value="">— Select front crawl time —</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>Back Crawl 1 Length Time <span class="required">*</span></label>
+          <select id="backCrawlTime">
+            <option value="">— Select back crawl time —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Potential Fast Track? <span class="required">*</span></label>
+      <div class="radio-group">
+        <label class="radio-option yes" id="ftYes" onclick="selectFastTrack('Yes')">
+          <input type="radio" name="fastTrack" value="Yes"> ⚡ Yes
+        </label>
+        <label class="radio-option no" id="ftNo" onclick="selectFastTrack('No')">
+          <input type="radio" name="fastTrack" value="No"> No
+        </label>
+      </div>
+      <input type="hidden" id="fastTrackValue">
+    </div>
+
+    <div class="field">
+      <label>Taster Notes <span class="required">*</span></label>
+      <textarea id="tasterNotes"
+        placeholder="Describe the child's swimming ability, confidence in the water, areas to work on and any other relevant observations..."></textarea>
+      <div class="hint">Tip: Tap the microphone on your keyboard to dictate notes hands-free</div>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn" onclick="submitForm()">SUBMIT TASTER NOTES</button>
+  <div class="success-msg" id="successMsg">
+    ✓ Taster notes submitted successfully! The form will reset shortly.
+  </div>
+</div>
+
+<script>
+const PASSWORD = 'SportsNut2026';
+const TASTER_SHEET_ID = '13EMpY-CQBrBCkxt9Zcc7LN8HGF-APv3SHA4wkWF6aYU';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyy5ZXGP1jPNNPxbrYYfSvEEL1sXtcaZPtAtIikyk-jjhbTknDkO_Zap-X6b3PRM65D/exec';
+
+let tasterData = [];
+let fastTrackSelected = '';
+
+// ── PASSWORD ──────────────────────────────────────────────────────────────
+function checkPassword() {
+  const val = document.getElementById('passwordInput').value;
+  if (val === PASSWORD) {
+    document.getElementById('passwordScreen').style.display = 'none';
+    document.getElementById('mainForm').style.display = 'block';
+    loadTasterData();
+  } else {
+    document.getElementById('passwordError').style.display = 'block';
+  }
+}
+
+// ── LOAD TASTER DATA FROM GOOGLE SHEET ───────────────────────────────────
+async function loadTasterData() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${TASTER_SHEET_ID}/gviz/tq?tqx=out:json&sheet=Taster%20Data`;
+    const resp = await fetch(url);
+    const text = await resp.text();
+    const json = JSON.parse(text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1));
+    const rows = json.table.rows;
+
+    function cleanVal(cell) {
+      if (!cell) return '';
+      // Handle Date() objects from gviz
+      const v = cell.v || '';
+      const f = cell.f || '';
+      if (f) return f;  // Use formatted value if available
+      if (typeof v === 'string') return v;
+      // Handle Date objects
+      if (v && typeof v === 'object' && v.constructor && v.constructor.name) {
+        const d = new Date(v);
+        if (!isNaN(d)) return d.toLocaleDateString('en-GB');
+      }
+      return String(v);
+    }
+
+    function cleanTime(cell) {
+      if (!cell) return '';
+      const f = cell.f || '';
+      if (f && f.includes(':')) return f;
+      const v = cell.v || '';
+      if (typeof v === 'string' && v.includes(':')) return v;
+      // xlrd time as fraction
+      if (typeof v === 'number' && v < 1) {
+        const totalMins = Math.round(v * 24 * 60);
+        const h = Math.floor(totalMins / 60).toString().padStart(2,'0');
+        const m = (totalMins % 60).toString().padStart(2,'0');
+        return h + ':' + m;
+      }
+      return String(v);
+    }
+
+    function cleanDate(cell) {
+      if (!cell) return '';
+      const f = cell.f || '';
+      if (f) return f;
+      const v = cell.v || '';
+      if (typeof v === 'string' && !v.startsWith('Date(')) return v;
+      // Parse Date(YYYY,M,D) format — months are 0-indexed
+      const match = String(v).match(/Date\((\d+),(\d+),(\d+)/);
+      if (match) {
+        const d = new Date(parseInt(match[1]), parseInt(match[2]), parseInt(match[3]));
+        return d.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+      }
+      return String(v);
+    }
+
+    tasterData = rows.map(row => ({
+      name:    cleanVal(row.c[0]),
+      venue:   cleanVal(row.c[1]),
+      day:     cleanVal(row.c[2]),
+      date:    cleanDate(row.c[3]),
+      time:    cleanTime(row.c[4]),
+    })).filter(r => r.name);
+
+    // Populate child dropdown
+    const select = document.getElementById('childName');
+    select.innerHTML = '<option value="">— Select child name —</option>';
+    tasterData.forEach(child => {
+      const opt = document.createElement('option');
+      opt.value = child.name;
+      opt.textContent = child.name;
+      select.appendChild(opt);
+    });
+
+    console.log(`Taster data loaded: ${tasterData.length} children`);
+  } catch(e) {
+    console.warn('Could not load taster data:', e);
+    document.getElementById('childName').innerHTML =
+      '<option value="">— No taster data available —</option>';
+  }
+}
+
+// ── CHILD SELECTION ───────────────────────────────────────────────────────
+function onChildChange() {
+  const name = document.getElementById('childName').value;
+  const child = tasterData.find(c => c.name === name);
+
+  if (child) {
+    setAutoField('venueField', child.venue);
+    setAutoField('dayDateField', `${child.day} ${child.date}`);
+    setAutoField('timeField', child.time);
+  } else {
+    resetAutoField('venueField');
+    resetAutoField('dayDateField');
+    resetAutoField('timeField');
+  }
+}
+
+function setAutoField(id, value) {
+  const el = document.getElementById(id);
+  el.textContent = value || '—';
+  el.className = value ? 'auto-field filled' : 'auto-field';
+}
+
+function resetAutoField(id) {
+  const el = document.getElementById(id);
+  el.textContent = 'Select a child to auto-fill';
+  el.className = 'auto-field loading';
+}
+
+function toggleOverride(overrideId, autoFieldId) {
+  const override = document.getElementById(overrideId);
+  const isHidden = override.style.display === 'none';
+  override.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) override.focus();
+}
+
+function onTeacherChange() { /* placeholder for future use */ }
+
+// Populate swim time dropdowns (10-80 seconds, 1 second increments)
+function populateSwimTimeDropdowns() {
+  ['frontCrawlTime', 'backCrawlTime'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    // Not Recorded option first
+    var notRecorded = document.createElement('option');
+    notRecorded.value = 'Not Recorded';
+    notRecorded.textContent = 'Not Recorded';
+    sel.appendChild(notRecorded);
+    // 10-55 seconds in 1 second increments
+    for (var s = 10; s <= 55; s++) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s + 's';
+      sel.appendChild(opt);
+    }
+    // 56+ as last option
+    var plus = document.createElement('option');
+    plus.value = '56+';
+    plus.textContent = '56+s';
+    sel.appendChild(plus);
+  });
+}
+populateSwimTimeDropdowns();
+
+// Show swim times section for L5, L6, L7, L8, Squad
+document.getElementById('suggestedLevel').addEventListener('change', function() {
+  var level = this.value;
+  var showTimes = ['L5','L6','L7','L8','Squad'].includes(level);
+  document.getElementById('swimTimesSection').style.display = showTimes ? 'block' : 'none';
+  if (!showTimes) {
+    document.getElementById('frontCrawlTime').value = '';
+    document.getElementById('backCrawlTime').value = '';
+  }
+});
+
+// ── FAST TRACK ────────────────────────────────────────────────────────────
+function selectFastTrack(val) {
+  fastTrackSelected = val;
+  document.getElementById('fastTrackValue').value = val;
+  document.getElementById('ftYes').classList.toggle('selected', val === 'Yes');
+  document.getElementById('ftNo').classList.toggle('selected', val === 'No');
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────
+async function submitForm() {
+  const teacher = document.getElementById('teacherName').value;
+  const childDropdown = document.getElementById('childName').value;
+  const childOverride = document.getElementById('childOverride').value.trim();
+  const child = childOverride || childDropdown;
+
+  const venueAuto = document.getElementById('venueField').textContent;
+  const venueOverride = document.getElementById('venueOverride').value;
+  const venue = venueOverride || (venueAuto !== 'Select a child to auto-fill' ? venueAuto : '');
+
+  const dayDateAuto = document.getElementById('dayDateField').textContent;
+  const dayDateOverride = document.getElementById('dayDateOverride').value.trim();
+  const dayDate = dayDateOverride || (dayDateAuto !== 'Select a child to auto-fill' ? dayDateAuto : '');
+
+  const timeAuto = document.getElementById('timeField').textContent;
+  const timeOverride = document.getElementById('timeOverride').value.trim();
+  const time = timeOverride || (timeAuto !== 'Select a child to auto-fill' ? timeAuto : '');
+
+  const level = document.getElementById('suggestedLevel').value;
+  const fastTrack = fastTrackSelected;
+  const notes = document.getElementById('tasterNotes').value.trim();
+
+  // Validate
+  const errors = [];
+  if (!teacher) errors.push('Please select your name');
+  if (!child) errors.push('Please select or enter a child name');
+  if (!level) errors.push('Please select a suggested level');
+  if (!fastTrack) errors.push('Please select Potential Fast Track? Yes or No');
+  if (!notes) errors.push('Please enter taster notes');
+
+  const frontCrawl = document.getElementById('frontCrawlTime').value;
+  const backCrawl = document.getElementById('backCrawlTime').value;
+
+  // Validate swim times if L5+ or Squad selected
+  const swimLevels = ['L5','L6','L7','L8','Squad'];
+  if (swimLevels.includes(level)) {
+    if (!frontCrawl) errors.push('Please select a Front Crawl 1 Length time');
+    if (!backCrawl) errors.push('Please select a Back Crawl 1 Length time');
+  }
+
+  if (errors.length > 0) {
+    alert('Please complete all required fields:\n\n' + errors.join('\n'));
+    return;
+  }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+
+  const payload = { teacher, child, venue, dayDate, time, level, fastTrack, notes, frontCrawl, backCrawl };
+
+  // Show success immediately — don't wait for server response
+  document.getElementById('successMsg').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  try {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    // Reset after 3 seconds
+    setTimeout(() => {
+      document.getElementById('teacherName').value = '';
+      document.getElementById('childName').value = '';
+      document.getElementById('childOverride').value = '';
+      document.getElementById('childOverride').style.display = 'none';
+      document.getElementById('venueOverride').value = '';
+      document.getElementById('venueOverride').style.display = 'none';
+      document.getElementById('dayDateOverride').value = '';
+      document.getElementById('dayDateOverride').style.display = 'none';
+      document.getElementById('timeOverride').value = '';
+      document.getElementById('timeOverride').style.display = 'none';
+      resetAutoField('venueField');
+      resetAutoField('dayDateField');
+      resetAutoField('timeField');
+      document.getElementById('suggestedLevel').value = '';
+      fastTrackSelected = '';
+      document.getElementById('ftYes').classList.remove('selected');
+      document.getElementById('ftNo').classList.remove('selected');
+      document.getElementById('fastTrackValue').value = '';
+      document.getElementById('tasterNotes').value = '';
+      document.getElementById('suggestedLevel').value = '';
+      document.getElementById('frontCrawlTime').value = '';
+      document.getElementById('backCrawlTime').value = '';
+      document.getElementById('swimTimesSection').style.display = 'none';
+      document.getElementById('successMsg').style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'SUBMIT TASTER NOTES';
+    }, 3000);
+
+  } catch(e) {
+    alert('Submission failed — please check your connection and try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'SUBMIT TASTER NOTES';
+  }
+}
+</script>
+</body>
+</html>
